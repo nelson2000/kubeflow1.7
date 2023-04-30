@@ -1,0 +1,186 @@
+
+# #go to aws 
+
+# # get a hosted zone  --> mydomain.com
+
+# # buy a domain  --> mydomain.com
+
+# # create a policy as shown below
+
+# {
+#     "Version": "2012-10-17",
+#     "Statement": [
+#         {
+#             "Sid": "VisualEditor0",
+#             "Effect": "Allow",
+#             "Action": [
+#                 "route53:GetChange",
+#                 "route53:ChangeResourceRecordSets",
+#                 "route53:ListResourceRecordSets"
+#             ],
+#             "Resource": [
+#                 "arn:aws:route53:::hostedzone/*",
+#                 "arn:aws:route53:::change/*"
+#             ]
+#         },
+#         {
+#             "Sid": "VisualEditor1",
+#             "Effect": "Allow",
+#             "Action": "route53:ListHostedZonesByName",
+#             "Resource": "*"
+#         }
+#     ]
+# }
+
+# access key AKIA2QTUX3MJSAWR3SQM
+# secret access key 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
+# arn:aws:iam::722873080595:role/dns-manager
+# https://acme-staging-v02.api.letsencrypt.org/directory
+# # create a role
+
+# # attach the policy created above to the role
+
+# # get the arn
+
+# #   arn:aws:iam::722873080595:role/dns-manager
+
+# # point your domain to your load balancer ip address
+
+# # create your production grade cluster issuer as shown below
+
+# # note the name --> letsencrypt-prod
+# # dns zone will be your domain name
+
+# # your solver is how you solve dns challenge
+
+# # dns01:
+# #   route53:
+# #     region: < your main region >
+# #     accessKeyID: <your access key id in aws account>
+# #     secretAccessKeySecretRef:
+# #       name: access-key
+# #       key: secret-access-key
+# #     role: < your role arn created at the begining>
+
+# # To create your secret access key ref above.
+
+# # kubectl create secret generic access-key2 --from-literal=secret-access-key2=FBmiK8s/UkVuV7GARPivxCjJCmEgVUhUv1a4/1CL
+
+# # name: access-key
+# # key: secret-access-key
+
+
+# # ---  
+
+# # apiVersion: cert-manager.io/v1
+# # kind: ClusterIssuer
+# # metadata:
+# #   name: letsencrypt-staging
+# # spec:
+# #   acme:
+# #     server: https://acme-staging-v02.api.letsencrypt.org/directory
+# #     email: nwajienelson@gmail.com
+# #     privateKeySecretRef:
+# #         name: letsencrypt-staging
+# #     solvers:
+# #     - selector:
+# #         dnsZones:
+# #           - "kube-test.link"
+# #       dns01:
+# #         route53:
+# #           region: us-east-1
+# #           accessKeyID: AKIA2QTUX3MJSAWR3SQM
+# #           secretAccessKeySecretRef:
+# #             name: access-key
+# #             key: secret-access-key
+# #           role: arn:aws:iam::722873080595:role/dns-manager
+
+# # create the Certificate
+# # issuer ref will be letsencrypt-prod
+
+# # secret name is istio-cert, you will need it later for your istio gateway
+
+# ---
+
+# apiVersion: cert-manager.io/v1
+# kind: Certificate
+# metadata:
+#   name: istio-cert
+#   namespace: istio-system
+# spec:
+#   isCA: true
+#   secretName: istio-cert-secret 
+#   commonName: kube-test.link
+#   dnsNames:
+#     - kube-test.link
+#   issuerRef:
+#     name: letsencrypt-prod
+#     kind: ClusterIssuer
+
+
+
+
+# ---
+
+# ##istio gateway setup#
+# apiVersion: networking.istio.io/v1alpha3
+# kind: Gateway
+# metadata:
+#   name: kubeflow-gateway
+#   namespace: kubeflow
+#   annotations:
+#     cert-manager.io/cluster-issuer: letsencrypt-prod
+# spec:
+#   selector:
+#     istio: ingressgateway
+#   servers:
+#   - hosts:
+#     - "kube-test.link"
+#     port:
+#       name: http
+#       number: 80
+#       protocol: HTTP
+#     # Upgrade HTTP to HTTPS
+#     tls:
+#       httpsRedirect: true
+#   - hosts:
+#     - "kube-test.link"
+#     port:
+#       name: https
+#       number: 443
+#       protocol: HTTPS
+#     tls:
+#       mode: SIMPLE
+#       credentialName: istio-cert-secret
+
+
+
+# global key - 23aef12c1f2a3244e13bfc3dceff911ba37e4
+
+# kubectl create secret generic cloudflare-api-key-secret
+
+
+# kubectl create -n istio-system secret generic istio-ingressgateway-ca-certs --from-literal=httpbin.example.com/2_intermediate/certs/ca-chain.cert.pem
+
+# $ kubectl create -n istio-system secret tls istio-ingressgateway-certs \
+# --key httpbin.example.com/3_application/private/httpbin.example.com.key.pem \
+# --cert httpbin.example.com/3_application/certs/httpbin.example.com.cert.pem
+
+kubectl create -n istio-system secret tls istio-ingressgateway-certs \
+  --key=/home/nelsonnwajie/SAAS-IAC-Kubeflow/'letsencrypt cert for kubeflow'/tls.key \
+  --cert=/home/nelsonnwajie/SAAS-IAC-Kubeflow/'letsencrypt cert for kubeflow'/tls.crt
+
+
+
+
+creating istio-ingressgateway-certs in istio-system namespace
+
+# export INGRESS_GATEWAY_SECRET={SECRET_NAME}
+
+# kubectl get secret $INGRESS_GATEWAY_SECRET -n istio-system -o yaml > istio-ingressgateway-certs.yaml
+
+# chnage secret name to istio-ingressgateway-certs
+
+# kubectl apply -f istio-ingressgateway-certs.yaml -n istio-system
+# kubectl rollout restart deploy istio-ingressgateway -n istio-system
+# rm istio-ingressgateway-certs.yaml

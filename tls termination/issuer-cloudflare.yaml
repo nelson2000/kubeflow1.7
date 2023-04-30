@@ -1,0 +1,46 @@
+# issuer
+# apiVersion: cert-manager.io/v1
+# kind: Issuer
+# metadata:
+#   name: letsencrypt-prod
+#   namespace: istio-system
+# spec:
+#   acme:
+#     server: https://acme-v02.api.letsencrypt.org/directory
+#     email: nwajienelson@gmail.com
+#     privateKeySecretRef:
+#       name: letsencrypt-prod
+#     solvers:
+#     - selector:
+#         dnsNames:
+#         - netroxlabs.com
+#       dns01:
+#         cloudflare:
+#           email: nwajienelson@gmail.com
+#           apiKeySecretRef:
+#             name: cloudflare-api-key3
+#             key: api-key
+
+# cluster issuer
+
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: cloudflare-prod1
+  namespace: istio-system
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: nwajienelson@gmail.com
+    privateKeySecretRef:
+      name: cloudflare-prod1
+    solvers:
+    - selector:
+        dnsNames:
+        - netroxlabs.com
+      dns01:
+        cloudflare:
+          email: nwajienelson@gmail.com
+          apiKeySecretRef:
+            name: cloudflare-key1
+            key: api-key

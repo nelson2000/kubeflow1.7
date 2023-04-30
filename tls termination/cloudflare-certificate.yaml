@@ -1,0 +1,32 @@
+
+
+# issuer cert
+# apiVersion: cert-manager.io/v1
+# kind: Certificate
+# metadata:
+#   name: netroxlabs-prod
+#   namespace: istio-system
+# spec:
+#   secretName: netroxlabs-tls3
+#   issuerRef:
+#     name: letsencrypt-prod
+#     kind: Issuer
+#   dnsNames:
+#   - 'netroxlabs.com'
+
+
+#cluaster issuer cert
+
+
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: cloudflare-cert
+  namespace: istio-system
+spec:
+  secretName: cloudflare-tls
+  issuerRef:
+    name: cloudflare-prod1
+    kind: Issuer
+  dnsNames:
+  - netroxlabs.com

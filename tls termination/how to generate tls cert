@@ -1,0 +1,133 @@
+get domain name from cloudflare
+netroxlab.com
+
+
+create secret to hold the key
+
+get the api key from cloudflare website under global key
+
+<--- cloudflare-secret.yaml
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: cloudflare-key1
+  namespace: istio-system
+type: Opaque
+stringData:
+  api-key: 23aef12c1f2a3244e13bfc3dceff911ba37e4
+
+kubectl apply -f cloudflare-secret.yaml 
+
+
+create the issuer from letsencrypt
+
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: cloudflare-prod1
+  namespace: istio-system
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: nwajienelson@gmail.com
+    privateKeySecretRef:
+      name: cloudflare-prod1
+    solvers:
+    - selector:
+        dnsNames:
+        - netroxlabs.com
+      dns01:
+        cloudflare:
+          email: nwajienelson@gmail.com
+          apiKeySecretRef:
+            name: cloudflare-key1  <--- reference the key from the secret created above
+            key: api-key
+
+create the certificate
+
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: cloudflare-cert
+  namespace: istio-system
+spec:
+  secretName: cloudflare-tls
+  issuerRef:
+    name: cloudflare-prod1
+    kind: Issuer
+  dnsNames:
+  - netroxlabs.com
+
+check that your cloudflare-tls is available and the cert has been issued
+
+
+create the istio-ingressgateway-certs
+
+kubectl get secret cloudflare-tls -n istio-system -o yaml > istio-ingressgateway-certs.yaml
+
+open istio-ingressgateway-certs.yaml
+
+change the name to istio-ingressgateway-certs
+
+kubectl apply -f istio-ingressgateway-certs.yaml -n istio-system
+kubectl rollout restart deploy istio-ingressgateway -n istio-system
+
+then edit your gateway.yaml
+
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: kubeflow-gateway
+  namespace: kubeflow
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - hosts:
+    - '*' 
+    port:
+      name: http
+      number: 80
+      protocol: HTTP
+    tls:
+      httpsRedirect: true
+  - hosts:
+    - netroxlabs.com
+    - www.netroxlabs.com
+    port:
+      name: https
+      number: 443
+      protocol: HTTPS
+    tls:
+      mode: SIMPLE
+      credentialName: cloudflare-tls  <--- from the certificate
+
+
+  apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: kubeflow-gateway
+  namespace: kubeflow
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - hosts:
+    - '*' 
+    port:
+      name: http
+      number: 80
+      protocol: HTTP
+    tls:
+      httpsRedirect: true
+  - hosts:
+    - netroxtechnologies.com
+    - www.netroxtechnologies.com
+    port:
+      name: https
+      number: 443
+      protocol: HTTPS
+    tls:
+      mode: SIMPLE
+      credentialName: netroxtechnologies-tls

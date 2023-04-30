@@ -1,0 +1,28 @@
+# apiVersion: cert-manager.io/v1
+# kind: Certificate
+# metadata:
+#   name: netroxtechnologies-prod
+#   namespace: istio-system
+# spec:
+#   secretName: netroxtechnologies-tls
+#   issuerRef:
+#     name: letsencrypt-prod
+#     kind: ClusterIssuer
+#   dnsNames:
+#   - netroxtechnologies.com
+
+# ---
+
+
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: netroxtechnologies-prod-aws
+  namespace: istio-system
+spec:
+  secretName: netroxtechnologies-tls
+  issuerRef:
+    name: aws-prod
+    kind: Issuer
+  dnsNames:
+  - netroxtechnologies.com

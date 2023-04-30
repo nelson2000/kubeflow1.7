@@ -1,0 +1,28 @@
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: aws-prod
+  namespace: istio-system
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: nwajienelson@gmail.com
+    privateKeySecretRef:
+        name: aws-prod
+    solvers:
+    - selector:
+        dnsZones:
+          - netroxtechnologies.com
+      dns01:
+        route53:
+          region: us-east-1
+          accessKeyID: AKIA2QTUX3MJ5UYMIIXK
+          secretAccessKeySecretRef:
+            name: access-key
+            key: secret-access-key
+          role: arn:aws:iam::722873080595:role/dns-manager
+
+# kubectl create secret generic access-key --from-literal=secret-access-key=GNYRaqxBzXEjq6PeqZcBLRl01Ltf1Q27UUoW6Ajy
+
+# Access key ID,Secret access key
+# AKIA2QTUX3MJ5UYMIIXK,GNYRaqxBzXEjq6PeqZcBLRl01Ltf1Q27UUoW6Ajy
